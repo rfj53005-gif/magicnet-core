@@ -5,7 +5,7 @@
 | Поле | Значение |
 |------|----------|
 | Тип | R — CPU существующего Linux/Android owner-query |
-| Статус | C — CPU1 установлен; Rust backend проверен как изолированный кандидат, без live deployment |
+| Статус | C — CPU1 + Rust1 установлен на целевом Android; энергопотребление не измерено |
 | Base | `871b7a3440cd9c850f1b09ef3b4ada9babb4384b` |
 
 ## Контракт
@@ -26,7 +26,7 @@ fallback на все UID, ошибки и маршрутизация сохра�
 
 По прямому запросу пользователя Linux/Android scanner получает отдельный
 экспериментальный backend `with_lx_rust_proc && cgo`. По умолчанию тег
-отсутствует и остаётся Go scanner CPU1. Замены работающего ядра нет.
+отсутствует и остаётся Go scanner CPU1. Rust1 установлен отдельной операцией по явному запросу пользователя.
 
 Rust выполняет полный scan за один C ABI вызов; общий UID cache, TTL,
 64 lock-shards, inode recheck, all-users fallback и package resolution не
@@ -80,7 +80,7 @@ all-users выбросы, поэтому основное сравнение —
 Собран полный ARM64 кандидат `.p2p1.cpu1.rust1`; на телефоне проходят
 16 integrated process tests и `check` неизменённого рабочего конфига.
 CPU1 PID/core/config, 31 policy file и 34 selector сохранены. Это не
-измерение общего CPU, RSS или расхода батареи; Rust в рабочий core не установлен.
+измерение общего CPU, RSS или расхода батареи; Rust1 установлен отдельно; live DNS/HTTPS/eBPF и сохранность config/selector проверены.
 
 ## Приёмка
 

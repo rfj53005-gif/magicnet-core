@@ -73,3 +73,20 @@ DNS ok, Tailscale identity SHA до/после совпадает. Все stagin
 
 Артефакты и сырые метрики: ../reports в корне experiment workspace
 `/root/ChatGPT/magicnet/work/rust-proc-scan-20261030`.
+
+## Rust1 deployment, 2026-10-30
+
+По явному запросу пользователя «начать установку» выполнена отдельная
+установка Rust1. До замены проверены свежий healthy baseline, staged
+version/check и резервные копии CPU1/config на телефоне и компьютере.
+Файлы ядра/metadata заменены rename, restart выполнен штатным cli.
+Загруженный PID 32749, SHA `81027131123a65536f62566512e101bb3851b57ae551253276a87d44693dc182`.
+DNS и оба HTTPS probes — ok/204, eBPF local cgroup attached/dataplane ready.
+Полный config, 31 policy file и 34 selector сохранились; healthdog enabled
+без manual hold. Наблюдались app UID, executable path и download bytes.
+Короткие 3 наблюдения показывают неизменный PID; это не тест батареи.
+Tailscale остаётся NeedsLogin, identity bytes не менялись; login/reset нет.
+Очистка staging проверена, backup hashes повторно проверены. Auto rollback
+не потребовался; fallback на CPU1 подготовлен с syntax/hash проверкой.
+
+Полная запись: `/root/ChatGPT/magicnet/work/rust-proc-scan-20261030/deployments/install-rust1-20261030T073349Z/validation.json`.

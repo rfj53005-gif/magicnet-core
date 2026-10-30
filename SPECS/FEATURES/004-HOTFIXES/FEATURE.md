@@ -165,7 +165,7 @@
 
 | Задача | Симптом | Где патч | Условие снятия | Статус |
 |---|---|---|---|---|
-| [087](../../TASKS/087-PROCESS_PATH_SCAN_COALESCING/SPEC.md) | Одновременные UID cache misses дублируют `/proc` scans | `common/process/searcher_linux.go` + lx helper/stub с `with_ebpf`; опциональный `with_lx_rust_proc` backend | Базовая реализация объединит scans и даст сопоставимый native backend, сохранив inode recheck, TTL и all-users fallback | CPU1 установлен; Rust кандидат |
+| [087](../../TASKS/087-PROCESS_PATH_SCAN_COALESCING/SPEC.md) | Одновременные UID cache misses дублируют `/proc` scans | `common/process/searcher_linux.go` + lx helper/stub с `with_ebpf`; опциональный `with_lx_rust_proc` backend | Базовая реализация объединит scans и даст сопоставимый native backend, сохранив inode recheck, TTL и all-users fallback | CPU1 + Rust1 установлен; энергия не измерена |
 | [086](../../TASKS/086-SOCKET_DIAG_REQUEST_STACK/SPEC.md) | Временная heap-аллокация запроса для каждого Linux/Android owner-query | `common/process/socket_diag_linux.go`, возврат фиксированного массива по значению | Query-реализация upstream/форка перестанет аллоцировать request; сохранять byte-level и live lookup проверки | держим |
 | [010](../../TASKS/010-WG_ENDPOINT_GRO_SPLIT_BRAIN/SPEC.md) | WG-endpoint без `detour` режет download на Android (0.44 Mbps) | submodule `conn/` | ✅ **выполнено** — upstream `24ea133` | **СНЯТ** |
 | [028](../../TASKS/028-NESTED_TUNNEL_UDP_FRAGMENT/SPEC.md) | Вложенные туннели через `detour` не ходят | `protocol/masque/outbound.go`, endpoint | Апстрим сам выставит `UDPFragmentDefault` для туннельных outbound'ов | держим |
