@@ -1,4 +1,4 @@
-//go:build linux && cgo && with_lx_rust_proc
+//go:build linux && cgo && with_lx_rust_proc && !with_lx_rust_proc_rust2
 
 package process
 

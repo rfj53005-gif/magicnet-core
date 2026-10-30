@@ -24,3 +24,24 @@ Inode u32, unique executable paths и их порядок сохраняются
 `src/unicode_digits.rs` сгенерирован `gen-unicode.go` из `unicode.Digit`
 закреплённого Go 1.26.7. Обновление Go Unicode tables требует явной
 регенерации; обычная Rust сборка источник не меняет.
+
+## Второй вариант (Rust2)
+
+`with_lx_rust_proc_rust2` вместе с `with_lx_rust_proc` переключает Go
+интеграцию на библиотеку Rust2 из `lib/<target>-rust2/`. C ABI и формат
+MPS1 те же, поэтому вариант проверяется при первом сканировании: Go вызывает
+`magicnet_proc_scanner_variant()` и при результате, отличном от 2,
+возвращает ошибку вместо декодирования старой библиотеки. Оба тега
+взаимоисключающие: с одним `with_lx_rust_proc` собирается Rust1.
+
+```sh
+./experimental/lx_rust_proc/build.sh aarch64-linux-android rust2
+GOOS=android GOARCH=arm64 make -f Makefile.lx lx-build \
+  LX_CGO_ENABLED=1 LX_TAGS="<прежние теги>,with_lx_rust_proc,with_lx_rust_proc_rust2,netgo,osusergo"
+```
+
+Go декодер Rust2 тоже валидирует magic, усечение, повторные inode,
+`id >= pathCount` и хвостовые байты, но списки владельцев нарезаются из
+блоков по 32 строки: у возвращаемых срезов всегда `cap == len`, а inode
+с более чем 32 владельцами получает отдельную точную аллокацию. Строки
+копируются до вызова Rust free.

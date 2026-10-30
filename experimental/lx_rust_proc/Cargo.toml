@@ -10,6 +10,15 @@ crate-type = ["staticlib", "rlib"]
 [dependencies]
 libc = "=0.2.189"
 
+[features]
+default = []
+# Rust2 生产候选：只编译新实现，导出规范符号 magicnet_proc_scan。
+rust2 = []
+# 仅供基准程序：同一静态库内同时导出 Rust1（magicnet_proc_scan_r1）与 Rust2（规范符号）。
+bench-dual = ["rust2"]
+# 仅供基准程序：统计原生分配次数与字节数。
+stats = []
+
 [profile.release]
 opt-level = 3
 lto = "thin"
