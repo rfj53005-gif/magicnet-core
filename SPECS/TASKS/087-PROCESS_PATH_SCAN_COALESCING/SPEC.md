@@ -5,7 +5,7 @@
 | Поле | Значение |
 |------|----------|
 | Тип | R — CPU существующего Linux/Android owner-query |
-| Статус | C — source/test/release-кандидат проверен; production deployment не выполнен |
+| Статус | C — CPU1 установлен; Rust backend проверен как изолированный кандидат, без live deployment |
 | Base | `871b7a3440cd9c850f1b09ef3b4ada9babb4384b` |
 
 ## Контракт
@@ -19,9 +19,37 @@ TTL, полный список executable paths, netlink UID/package resolution,
 fallback на все UID, ошибки и маршрутизация сохраняются. Cache hit
 возвращается до нового lock. Между UID и all-users fallback lock не
 удерживается. Новых таймеров, настроек, горутин и растущих UID-lock maps нет.
-Без `with_ebpf` stub сохраняет исходный порядок cache/build/cache-add.
+Без `with_ebpf` stub сохраняет исходный порядок cache/build/cache-add;
+выбор Rust backend управляется отдельным тегом и не включает coalescing.
 
-## Измерение
+## Опциональный Rust backend
+
+По прямому запросу пользователя Linux/Android scanner получает отдельный
+экспериментальный backend `with_lx_rust_proc && cgo`. По умолчанию тег
+отсутствует и остаётся Go scanner CPU1. Замены работающего ядра нет.
+
+Rust выполняет полный scan за один C ABI вызов; общий UID cache, TTL,
+64 lock-shards, inode recheck, all-users fallback и package resolution не
+меняются. Результат содержит все inode и все уникальные executable paths
+в прежнем порядке, включая произвольные Unix path bytes. Ошибки scan не
+маскируются частичным результатом. Rust владеет сериализованным buffer;
+Go копирует строки и вызывает парный Rust free. Go pointers не сохраняются,
+Rust unwind не пересекает C ABI. Бесконечных фоновых worker нет.
+
+Тег требует Rust staticlib и `LX_CGO_ENABLED=1`. Default Makefile остаётся
+CGO=0. Для Android эксперимент явно добавляет `netgo,osusergo`, чтобы
+не переключать стандартный DNS/user lookup на libc. Сборки с тегом и без
+него проверяются отдельно. Рабочий eBPF/mode/node/config не меняется.
+
+Точная новая поверхность upstream: **0 файлов**; используются существующий
+lx helper `common/process/lx_process_path_scan_shared_linux.go`, новые
+lx файлы, crate `experimental/lx_rust_proc`, параметр в `Makefile.lx`.
+Это один backend той же задачи 087, не отдельная дублирующая спецификация.
+Приёмка сравнивает CPU1, Rust через FFI и аналогичную Go оптимизацию;
+Go heap metrics не считаются полной памятью Rust. Функциональные тесты
+и `check` не доказывают экономию всей батареи или live-трафик нового ядра.
+
+## Измерение CPU1
 
 Изолированный тестовый процесс на физическом Android ARM64, Go 1.26.7,
 CGO=0; оба алгоритма в одном executable и с долгоживущим searcher.
@@ -36,6 +64,23 @@ CGO=0; оба алгоритма в одном executable и с долгожив
 Первичные прогоны с отдельными процессами и созданием searcher для
 каждого burst сохранены в отчётах. Их single-caller разброс не принят
 как доказательство регрессии/ускорения постоянного production searcher.
+
+## Измерение Rust
+
+Проверка на физическом Android ARM64: 864 полных scan в одном executable,
+6 блоков по 24 цикла для UID и all-users, каждый цикл чередует CPU1 Go,
+buffered Go control и Rust через C ABI. Порядок сбалансирован; учитываются
+FFI, сериализация, Go decode и process CPU. Для UID paired median CPU
+сократился на 12.49%, для all-users — на 12.38%. Во всех шести блоках
+Rust быстрее; по циклам 140/144 и 144/144 соответственно. Go control
+даёт 8.84% и 6.41%: часть выигрыша объясняется алгоритмом/аллокациями.
+Ранние длинные последовательные серии дали больший UID выигрыш и
+all-users выбросы, поэтому основное сравнение — interleaved.
+
+Собран полный ARM64 кандидат `.p2p1.cpu1.rust1`; на телефоне проходят
+16 integrated process tests и `check` неизменённого рабочего конфига.
+CPU1 PID/core/config, 31 policy file и 34 selector сохранены. Это не
+измерение общего CPU, RSS или расхода батареи; Rust в рабочий core не установлен.
 
 ## Приёмка
 

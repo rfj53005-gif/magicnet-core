@@ -11,3 +11,12 @@
 Зона upstream-конфликта: только `common/process/searcher_linux.go`, поле
 searcher и вызов build/cache publication. Внешние API и правило выбора
 процесса не меняются.
+
+## Эксперимент Rust
+
+1. Отдельный worktree от CPU1; no-tag Go backend сохраняется.
+2. Один native scan, raw-byte paths, явное Rust buffer ownership.
+3. Проверить fixtures, UID, ошибки, live socket и concurrent calls.
+4. Измерить same-binary CPU с FFI и Go control, затем interleaved order.
+5. Собрать опциональный ARM64 core через Makefile.lx и выполнить только check.
+6. Сохранить p2p1 и fingerprint работающего ядра/политик/selector.

@@ -41,3 +41,35 @@ cache. Уменьшение CPU всего production ядра, расхода �
 
 Rebase surface: одно upstream поле и один участок build/cache publication
 в `common/process/searcher_linux.go`. Новые lx-файлы переносятся отдельно.
+
+## Дополнение: opt-in Rust scanner, 2026-10-30
+
+По запросу пользователя создан отдельный worktree от CPU1 `bc97aa4`.
+Добавлены crate `experimental/lx_rust_proc`, C ABI bridge/free/decoder,
+`with_lx_rust_proc` и Go stub. Из нового upstream diff — 0 файлов;
+проводка затрагивает только lx helper и `Makefile.lx` (CGO default 0).
+Включение Rust требует LX_CGO_ENABLED=1 и staticlib; netgo/osusergo
+сохраняют Go DNS/user lookup. Путь Go cache-hit не меняется.
+
+Проверены raw Unix bytes, dedup/order, Unicode digits, UID/all-users,
+исчезающие/недоступные entries, scan errors, native socket ownership,
+concurrent FFI/free и malformed snapshot. Три Rust unit tests, Go race/vet,
+strict cgocheck2 и decoder fuzz (755924 inputs) проходят. Встроенный
+process suite: 16 тестов на Android; также host route/ebpf и no-tag
+build ./... с обязательным -checklinkname=0.
+
+Основное измерение: 864 полных /proc scans, 6 interleaved блоков.
+Paired median CPU: UID -12.49%, all-users -12.38%. Go algorithm control:
+-8.84%/-6.41%. Все 6 блоков Rust быстрее; это CPU отдельной процедуры,
+не CPU всего ядра и не батарея. Go allocations не учитывают Rust heap.
+
+Полный `.p2p1.cpu1.rust1` собран каноническим Makefile.lx с сохранённым
+p2p1 dependency patch. На телефоне кандидат прошёл version/tag и check
+рабочего конфига; не запускался как network service. Работающий CPU1
+PID 13310 и SHA/config/31 policy/34 selectors сохранены; health healthy,
+DNS ok, Tailscale identity SHA до/после совпадает. Все staging скрипты
+завершили очистку. После финального fingerprint ADB отсоединился,
+поэтому дополнительная повторная inventory-проверка не выполнялась.
+
+Артефакты и сырые метрики: ../reports в корне experiment workspace
+`/root/ChatGPT/magicnet/work/rust-proc-scan-20261030`.

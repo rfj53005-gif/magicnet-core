@@ -9,5 +9,13 @@
 - [x] Release-сборки и p2p1 dependency regression.
 - [x] Экспорт патча и итоговый отчёт.
 
-Production deployment и измерение расхода батареи остаются отдельной
-приёмкой; текущая задача не заменяет ядро телефона.
+CPU1 установлен отдельной операцией. Rust live deployment и измерение
+расхода батареи остаются отдельной приёмкой; Rust эксперимент не заменяет ядро телефона.
+
+## Эксперимент Rust
+
+- [x] Build-tag backend и явный CGO opt-in без новых upstream seams.
+- [x] Native ownership/FFI/error/UID проверки и Go algorithm control.
+- [x] Same-binary и interleaved Android измерения.
+- [x] Полный experimental ARM64 core и check действующего конфига.
+- [x] Проверить неизменность production core, policy, 34 selectors и очистить staging.
