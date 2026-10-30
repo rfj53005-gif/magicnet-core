@@ -64,4 +64,4 @@ pub const DIGITS: &[(u32, u32, u32)] = &[
     (0x1e4f0, 0x1e4f9, 1),
     (0x1e950, 0x1e959, 1),
     (0x1fbf0, 0x1fbf9, 1),
-]; 
+];

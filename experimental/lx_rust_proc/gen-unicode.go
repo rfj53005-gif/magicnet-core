@@ -16,5 +16,5 @@ func main() {
 	for _, r := range unicode.Digit.R32 {
 		fmt.Printf("    (0x%x, 0x%x, %d),\n", r.Lo, r.Hi, r.Stride)
 	}
-	fmt.Println("]; ")
+	fmt.Println("];")
 }
