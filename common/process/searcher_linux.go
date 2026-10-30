@@ -37,6 +37,9 @@ type linuxSearcher struct {
 	packageManager   tun.PackageManager
 	diagConns        [4]*socketDiagPool
 	processPathCache *freelru.Cache[uint32, *uidProcessPaths]
+	// lx:begin process-path-scan-coalescing
+	processPathScanLocks processPathScanLocks
+	// lx:end process-path-scan-coalescing
 }
 
 type uidProcessPaths struct {
@@ -144,11 +147,12 @@ func (s *linuxSearcher) findProcessPaths(targetInode, uid uint32) ([]string, err
 				return processPaths, nil
 			}
 		}
-		processPaths, err := buildProcessPaths(scanUID)
+		// lx:begin process-path-scan-coalescing
+		processPaths, err := s.loadProcessPaths(scanUID, targetInode)
+		// lx:end process-path-scan-coalescing
 		if err != nil {
 			return nil, err
 		}
-		s.processPathCache.Add(scanUID, &uidProcessPaths{entries: processPaths})
 		inodePaths, found := processPaths[targetInode]
 		if found {
 			return inodePaths, nil
