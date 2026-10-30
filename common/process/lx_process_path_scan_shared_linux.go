@@ -3,7 +3,7 @@
 package process
 
 func (s *linuxSearcher) readProcessPaths(uid uint32) (map[uint32][]string, error) {
-	paths, err := buildProcessPaths(uid)
+	paths, err := buildProcessPathsSelected(uid)
 	if err != nil {
 		return nil, err
 	}

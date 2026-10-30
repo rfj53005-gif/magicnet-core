@@ -66,6 +66,7 @@ LX_VERSION ?= $(UPSTREAM_VERSION)-lx.$(LX_BUILD)
 # crypto/tls go:linkname in common/badtls otherwise) — mirrors upstream build_libbox.
 LX_LDFLAGS = -X 'github.com/sagernet/sing-box/constant.Version=$(LX_VERSION)' -checklinkname=0 -s -w -buildid=
 LX_OUTPUT  ?= sing-box
+LX_CGO_ENABLED ?= 0
 
 # Pinned proto toolchain (SPEC 014 §3.5). Upstream `make proto` installs the codegen
 # plugins at @latest, so .pb.go cannot be reproduced byte-for-byte across a rebase. We
@@ -90,7 +91,7 @@ lx-proto: lx-proto-install ## Regenerate *.pb.go reproducibly from the merged .p
 	gofumpt -w .
 
 lx-build: ## Build the drop-in `sing-box` binary with lx features.
-	CGO_ENABLED=0 go build -v -trimpath -tags "$(LX_TAGS)" -ldflags "$(LX_LDFLAGS)" -o "$(LX_OUTPUT)" ./cmd/sing-box
+	CGO_ENABLED=$(LX_CGO_ENABLED) go build -v -trimpath -tags "$(LX_TAGS)" -ldflags "$(LX_LDFLAGS)" -o "$(LX_OUTPUT)" ./cmd/sing-box
 
 lx-version: ## Print the computed lx version string (e.g. 1.13.13-lx.1).
 	@echo "$(LX_VERSION)"
