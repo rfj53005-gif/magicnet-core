@@ -37,6 +37,10 @@ type linuxSearcher struct {
 	packageManager   tun.PackageManager
 	diagConns        [4]*socketDiagPool
 	processPathCache *freelru.Cache[uint32, *uidProcessPaths]
+	// resolveProcessPath gates the /proc walk (see process.Config). With no
+	// process path rules configured the walk only burns kernel time on
+	// syscalls whose result nothing reads.
+	resolveProcessPath bool
 	// lx:begin process-path-scan-coalescing
 	processPathScanLocks processPathScanLocks
 	// lx:end process-path-scan-coalescing
@@ -50,9 +54,10 @@ func NewSearcher(config Config) (Searcher, error) {
 	processPathCache := common.Must1(freelru.New[uint32, *uidProcessPaths](64, maphash.NewHasher[uint32]().Hash32, true))
 	processPathCache.SetLifetime(time.Second)
 	searcher := &linuxSearcher{
-		logger:           config.Logger,
-		packageManager:   config.PackageManager,
-		processPathCache: processPathCache,
+		logger:             config.Logger,
+		packageManager:     config.PackageManager,
+		processPathCache:   processPathCache,
+		resolveProcessPath: config.ResolveProcessPath,
 	}
 	for _, family := range []uint8{syscall.AF_INET, syscall.AF_INET6} {
 		for _, protocol := range []uint8{syscall.IPPROTO_TCP, syscall.IPPROTO_UDP} {
@@ -85,15 +90,17 @@ func (s *linuxSearcher) FindProcessInfo(ctx context.Context, network string, sou
 	processInfo := &adapter.ConnectionOwner{
 		UserId: int32(uid),
 	}
-	processPaths, err := s.findProcessPaths(inode, uid)
-	if err != nil {
-		s.logger.DebugContext(ctx, "find process path: ", err)
-	} else if C.IsAndroid {
-		processInfo.ProcessPaths = common.Filter(processPaths, func(processPath string) bool {
-			return !strings.HasPrefix(processPath, "/system/bin/app_process")
-		})
-	} else {
-		processInfo.ProcessPaths = processPaths
+	if s.resolveProcessPath {
+		processPaths, err := s.findProcessPaths(inode, uid)
+		if err != nil {
+			s.logger.DebugContext(ctx, "find process path: ", err)
+		} else if C.IsAndroid {
+			processInfo.ProcessPaths = common.Filter(processPaths, func(processPath string) bool {
+				return !strings.HasPrefix(processPath, "/system/bin/app_process")
+			})
+		} else {
+			processInfo.ProcessPaths = processPaths
+		}
 	}
 	if s.packageManager != nil {
 		appID := uid % 100000

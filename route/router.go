@@ -44,6 +44,7 @@ type Router struct {
 	httpClientManager adapter.HTTPClientManager
 	rules             []adapter.Rule
 	needFindProcess   bool
+	needProcessPath   bool
 	needFindNeighbor  bool
 	leaseFiles        []string
 	ruleSets          []adapter.RuleSet
@@ -102,6 +103,7 @@ func NewRouter(ctx context.Context, logFactory log.Factory, options option.Route
 		rules:                make([]adapter.Rule, 0, len(options.Rules)),
 		ruleSetMap:           make(map[string]adapter.RuleSet),
 		needFindProcess:      hasRule(options.Rules, isProcessRule) || hasDNSRule(dnsOptions.Rules, isProcessDNSRule) || options.FindProcess,
+		needProcessPath:      hasRule(options.Rules, isProcessPathRule) || hasDNSRule(dnsOptions.Rules, isProcessPathDNSRule) || options.FindProcess,
 		needFindNeighbor:     hasRule(options.Rules, isNeighborRule) || hasDNSRule(dnsOptions.Rules, isNeighborDNSRule) || hasLocalNeighborDNSServer(dnsOptions.Servers) || options.FindNeighbor,
 		leaseFiles:           options.DHCPLeaseFiles,
 		pauseManager:         service.FromContext[pause.Manager](ctx),
@@ -233,24 +235,31 @@ func (r *Router) Start(stage adapter.StartStage, scope *adapter.Scope) error {
 		}
 		r.network.Initialize(r.ruleSets)
 		needFindProcess := r.needFindProcess
+		needProcessPath := r.needProcessPath
 		for _, ruleSet := range r.ruleSets {
 			metadata := ruleSet.Metadata()
 			if metadata.ContainsProcessRule {
 				needFindProcess = true
+				// Conservative: a rule set's process metadata does not tell
+				// package rules from path rules, so keep the /proc walk when
+				// any process rule can come from a rule set.
+				needProcessPath = true
 			}
 		}
 		if C.IsAndroid && r.platformInterface != nil {
 			needFindProcess = true
 		}
 		r.needFindProcess = needFindProcess
+		r.needProcessPath = needProcessPath
 		if needFindProcess {
 			if r.platformInterface != nil && r.platformInterface.UsePlatformConnectionOwnerFinder() {
 				r.processSearcher = newPlatformSearcher(r.platformInterface)
 			} else {
 				monitor.Start("initialize process searcher")
 				searcher, err := process.NewSearcher(process.Config{
-					Logger:         r.logger,
-					PackageManager: r.network.PackageManager(),
+					Logger:             r.logger,
+					PackageManager:     r.network.PackageManager(),
+					ResolveProcessPath: needProcessPath,
 				})
 				monitor.Finish()
 				if err != nil {
