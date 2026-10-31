@@ -45,6 +45,13 @@
 # (gomobile builds experimental/libbox, which does not import lxd/).
 LX_TAGS ?= with_gvisor,with_quic,with_dhcp,with_wireguard,with_utls,with_clash_api,with_naive_outbound,with_purego,badlinkname,tfogo_checklinkname0,with_xhttp,with_awg,with_lx_command,with_lxd,with_openvpn,with_openconnect,with_lx_chain,with_tailscale
 
+# Android release line: the `sing-box lxd` daemon has no consumer on the phone
+# (the MagicNet module runtime, its scripts and magicnet-cli never invoke it --
+# verified 2026-10-31 by grepping the whole self-use package; the AAR never
+# carried it either). Drop only this tag for Android binaries; desktop and
+# OpenWrt builds keep the daemon (scripts-lx/openwrt/*-setup scripts use it).
+LX_TAGS_ANDROID := $(shell echo '$(LX_TAGS)' | tr ',' '\n' | grep -av '^with_lxd$$' | paste -sd,)
+
 # lx build counter over a given upstream base (override in CI/release: make -f Makefile.lx lx-build LX_BUILD=3).
 LX_BUILD ?= 1
 
@@ -91,6 +98,10 @@ lx-proto: lx-proto-install ## Regenerate *.pb.go reproducibly from the merged .p
 	gofumpt -w .
 
 lx-build: ## Build the drop-in `sing-box` binary with lx features.
+	CGO_ENABLED=$(LX_CGO_ENABLED) go build -v -trimpath -tags "$(LX_TAGS)" -ldflags "$(LX_LDFLAGS)" -o "$(LX_OUTPUT)" ./cmd/sing-box
+
+lx-build-android: LX_TAGS := $(LX_TAGS_ANDROID)
+lx-build-android: ## lx-build without the lxd daemon (Android release line; see docs above LX_TAGS_ANDROID).
 	CGO_ENABLED=$(LX_CGO_ENABLED) go build -v -trimpath -tags "$(LX_TAGS)" -ldflags "$(LX_LDFLAGS)" -o "$(LX_OUTPUT)" ./cmd/sing-box
 
 lx-version: ## Print the computed lx version string (e.g. 1.13.13-lx.1).
