@@ -20,6 +20,15 @@
 来自 sing-box 的部分（含上述修改）继续适用 **GPL-3.0**，许可证全文见 `LICENSE`。
 本仓库即对应源码；同一分支上的提交包含完整构建脚本与依赖固定信息。
 
+## 作者与致谢
+
+- **sing-box 原作者：nekohasekai / SagerNet** — <https://github.com/SagerNet/sing-box>，GPL-3.0；
+  本仓库经 **LIghtJUNction** 的 sing-box fork 派生。
+- **MagicNet 原作者 / 维护者：LIghtJUNction** — <https://github.com/LIghtJUNction>，
+  个人主页 <https://lightjunction.github.io/lightjunction/>，
+  X/Twitter [@LIghtJUNction_x](https://x.com/LIghtJUNction_x)。
+  本 fork 只服务于其项目在个人设备上的使用，核心与协议的功劳属于上述两位作者。
+
 ## 免责
 
 仅供个人使用，不提供任何担保；使用风险自负。
